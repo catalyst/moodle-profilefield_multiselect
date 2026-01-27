@@ -1,5 +1,4 @@
 <?php
-
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -16,41 +15,46 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * This file contains the multiselect profile field class.
- *
- * @copyright 2014 Nitin Jain
- * @license   http://www.gnu.org/copyleft/gpl.html GNU Public License
- */
-
-/**
  * Handles displaying and editing the multiselect field.
  *
  * @copyright 2014 Nitin Jain
  * @license   http://www.gnu.org/copyleft/gpl.html GNU Public License
+ * @package profilefield_multiselect
  */
-class profile_field_multiselect extends profile_field_base
-{
+class profile_field_multiselect extends profile_field_base {
+    /**
+     * Options for the multiselect menu.
+     * @var array
+     */
     public $options;
+
+    /**
+     * Temporary data holder for the data retrieved from database.
+     * @var array
+     */
     public $datakey;
 
     /**
      * Constructor method.
      * Pulls out the options for the menu from the database and sets the
      * the corresponding key for the data if it exists.
+     *
+     * @param int $fieldid field id
+     * @param int $userid user id
+     * @param null $fielddata field data
      */
-    public function __construct($fieldid = 0, $userid = 0, $fielddata = null)
-    {
-        //first call parent constructor
+    public function __construct($fieldid = 0, $userid = 0, $fielddata = null) {
+        // First call parent constructor.
         parent::__construct($fieldid, $userid, $fielddata);
 
         $options = [];
 
-        /// Param 1 for menu type is the options
+        // Param 1 for menu type is the options.
         if (is_object($this->field) && property_exists($this->field, 'param1')) {
             $options = explode("\n", $this->field->param1);
         }
 
-        $this->options = array();
+        $this->options = [];
 
         if (is_object($this->field) && property_exists($this->field, 'required')) {
             if ($this->field->required) {
@@ -59,10 +63,10 @@ class profile_field_multiselect extends profile_field_base
         }
 
         foreach ($options as $key => $option) {
-            $this->options[$key] = format_string($option, true, ['context' => context_system::instance()]); //multilang formatting
+            $this->options[$key] = format_string($option, true, ['context' => context_system::instance()]); // Multilang formatting.
         }
 
-        /// Set the data key
+        // Set the data key.
         if ($this->data !== null) {
             $this->data = str_replace("\r", '', $this->data);
             $this->datatmp = explode("\n", $this->data);
@@ -76,10 +80,9 @@ class profile_field_multiselect extends profile_field_base
      * Create the code snippet for this field instance
      * Overwrites the base class method.
      *
-     * @param   object   moodleform instance
+     * @param object $mform moodleform instance
      */
-    public function edit_field_add($mform)
-    {
+    public function edit_field_add($mform) {
         $mform->addElement(
             'select',
             $this->inputname,
@@ -92,9 +95,10 @@ class profile_field_multiselect extends profile_field_base
     /**
      * Set the default value for this field instance
      * Overwrites the base class method.
+     *
+     * @param object $mform moodleform instance
      */
-    public function edit_field_set_default($mform)
-    {
+    public function edit_field_set_default($mform) {
         $defaultkey = '';
         if (false !== array_search($this->field->defaultdata, $this->options)) {
             $defaultkey = (int) array_search($this->field->defaultdata, $this->options);
@@ -111,9 +115,7 @@ class profile_field_multiselect extends profile_field_base
      * @param mixed    $data       - the key returned from the select input in the form
      * @param stdClass $datarecord The object that will be used to save the record
      */
-    public function edit_save_data_preprocess($data, $datarecord)
-    {
-        //print "<pre>";print_r($data);die;
+    public function edit_save_data_preprocess($data, $datarecord) {
         $string = '';
         if (is_array($data)) {
             foreach ($data as $key) {
@@ -133,24 +135,22 @@ class profile_field_multiselect extends profile_field_base
      * we should load the key for the saved data
      * Overwrites the base class method.
      *
-     * @param   object   user object
+     * @param object $user user object
      */
-    public function edit_load_user_data($user)
-    {
+    public function edit_load_user_data($user) {
         $user->{$this->inputname} = $this->datakey;
     }
 
     /**
      * HardFreeze the field if locked.
      *
-     * @param   object   instance of the moodleform class
+     * @param object $mform moodleform instance
      */
-    public function edit_field_set_locked($mform)
-    {
+    public function edit_field_set_locked($mform) {
         if (!$mform->elementExists($this->inputname)) {
             return;
         }
-        if ($this->is_locked() and !has_capability('moodle/user:update', context_system::instance())) {
+        if ($this->is_locked() && !has_capability('moodle/user:update', context_system::instance())) {
             $mform->hardFreeze($this->inputname);
             $mform->setConstant($this->inputname, $this->datakey);
         }
@@ -164,12 +164,11 @@ class profile_field_multiselect extends profile_field_base
      *
      * @return int options key for the menu
      */
-    public function convert_external_data($value)
-    {
+    public function convert_external_data($value) {
         $retval = array_search($value, $this->options);
 
         // If value is not found in options then return null, so that it can be handled
-        // later by edit_save_data_preprocess
+        // later by edit_save_data_preprocess.
         if ($retval === false) {
             $retval = null;
         }
